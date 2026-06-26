@@ -1,0 +1,21 @@
+
+**** Log file opened at 2026-06-26 11:33:13.904771 UTC+05:30 (GMT), Encoding UTF-8
+NW RFC Library: SDK variant, Release 750 Patch Level 18
+Compilation date          : Feb 28 2026 02:31:56
+CPIC library              : 754.2025.08.18 version 3
+NI library                : 40
+Kernel Release            : 754 Patch Level 637
+Current working directory : /opt/orbitsap/platform
+Program                   : python3
+Process ID                : 16798
+User                      : root
+Hardware                  : AMD/Intel x86_64 with Linux x86_64
+Operating_system          : Linux 5.14.21-150500.53-default
+Hostname                  : hanadb
+IP address                : 10.10.2.101
+IPv6 address              : 
+NI IPv6 status            : inactive
+Global trace level        : 0 : None
+
+2026-06-26 11:33:13.904795 [140677770807104] >> Info entry
+	Did not find config file /opt/orbitsap/platform/sapnwrfc.ini.
