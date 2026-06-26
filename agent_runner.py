@@ -1,12 +1,11 @@
 import pyrfc
 import requests
-import time
 from datetime import datetime
 
 # Platform connection
-PLATFORM_URL = "http://localhost:8000"
-API_KEY = "79863c05f0ed26ec914d99900912e2dee2b8d3615e0f3fa8f495d3fcd5b3cda7"
-AGENT_ID = 1
+PLATFORM_URL = "https://web-production-8f3a4f.up.railway.app"
+API_KEY = "55e20d4cbad98df0b9d843cf08cf80d43fc2f6e913bf556c43570d9432d191ba"
+AGENT_ID = 2
 
 # SAP connection
 SAP_CONFIG = {
@@ -35,7 +34,6 @@ def step_get_system_info(conn, run_id):
     info = result['RFCSI_EXPORT']
     msg = f"SID={info['RFCSYSID']} Host={info['RFCHOST']} Release={info['RFCSAPRL']}"
     report_step(run_id, "get_system_info", "success", msg)
-    return info
 
 def step_lock_users(conn, run_id):
     try:
@@ -73,15 +71,26 @@ def step_check_clients(conn, run_id):
     except Exception as e:
         report_step(run_id, "check_clients", "error", str(e))
 
-def run_post_refresh(run_id):
+def run_post_refresh():
     print(f"\n{'='*50}")
-    print(f"OrbitSAP - Starting Post Refresh Run #{run_id}")
+    print(f"OrbitSAP - Starting Post Refresh")
     print(f"Time: {datetime.utcnow().isoformat()}")
     print(f"{'='*50}\n")
 
+    # Start run on production platform
+    response = requests.post(
+        f"{PLATFORM_URL}/api/agents/{AGENT_ID}/runs/start",
+        headers=HEADERS
+    )
+    run = response.json()
+    run_id = run['run_id']
+    print(f"Run #{run_id} started on production platform\n")
+
+    # Connect to SAP
     conn = sap_connect()
     print("Connected to SAP DPK\n")
 
+    # Execute steps
     step_get_system_info(conn, run_id)
     step_lock_users(conn, run_id)
     step_check_interfaces(conn, run_id)
@@ -89,6 +98,7 @@ def run_post_refresh(run_id):
 
     conn.close()
 
+    # Complete run
     requests.post(
         f"{PLATFORM_URL}/api/runs/{run_id}/complete",
         params={"status": "completed"},
@@ -96,8 +106,8 @@ def run_post_refresh(run_id):
     )
 
     print(f"\n{'='*50}")
-    print(f"Refresh Run #{run_id} Completed Successfully")
+    print(f"Run #{run_id} Completed Successfully on Production")
     print(f"{'='*50}\n")
 
 if __name__ == '__main__':
-    run_post_refresh(1)
+    run_post_refresh()

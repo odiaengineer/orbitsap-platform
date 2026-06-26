@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>OrbitSAP</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f5f5f5; color: #1a1a1a; }
+.nav { display: flex; align-items: center; justify-content: space-between; padding: 14px 24px; border-bottom: 1px solid #e5e5e5; background: #fff; }
+.nav-brand { font-size: 16px; font-weight: 600; display: flex; align-items: center; gap: 8px; }
+.dot { width: 8px; height: 8px; border-radius: 50%; background: #22c55e; animation: pulse 2s infinite; }
+@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+.main { padding: 24px; max-width: 960px; margin: 0 auto; }
+.metrics { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 24px; }
+.metric { background: #fff; border-radius: 8px; padding: 16px; border: 1px solid #e5e5e5; }
+.metric-label { font-size: 12px; color: #888; margin-bottom: 6px; }
+.metric-value { font-size: 24px; font-weight: 600; }
+.badge { font-size: 11px; padding: 3px 8px; border-radius: 4px; font-weight: 500; }
+.badge-online,.badge-completed,.badge-GREEN { background: #dcfce7; color: #16a34a; }
+.badge-pending,.badge-YELLOW { background: #fef9c3; color: #ca8a04; }
+.badge-error,.badge-failed,.badge-RED { background: #fee2e2; color: #dc2626; }
+.badge-GRAY,.badge-UNKNOWN { background: #f3f4f6; color: #6b7280; }
+.section-title { font-size: 14px; font-weight: 600; margin-bottom: 12px; }
+.card { background: #fff; border: 1px solid #e5e5e5; border-radius: 12px; overflow: hidden; margin-bottom: 20px; }
+.agent-card { background: #fff; border: 1px solid #e5e5e5; border-radius: 12px; padding: 16px 20px; margin-bottom: 12px; }
+.agent-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+.agent-info { display: flex; align-items: center; gap: 12px; }
+.agent-icon { width: 36px; height: 36px; border-radius: 8px; background: #eff6ff; display: flex; align-items: center; justify-content: center; font-size: 18px; }
+.agent-name { font-size: 14px; font-weight: 600; }
+.agent-meta { font-size: 12px; color: #888; margin-top: 2px; }
+.btn-group { display: flex; gap: 8px; }
+.btn { font-size: 12px; padding: 6px 14px; border-radius: 6px; border: 1px solid #d1d5db; background: #fff; cursor: pointer; font-weight: 500; display: flex; align-items: center; gap: 4px; }
+.btn:hover { background: #f9f9f9; }
+.btn-start { border-color: #16a34a; color: #16a34a; }
+.btn-start:hover { background: #f0fdf4; }
+.btn-stop { border-color: #dc2626; color: #dc2626; }
+.btn-stop:hover { background: #fef2f2; }
+.btn-restart { border-color: #d97706; color: #d97706; }
+.btn-restart:hover { background: #fffbeb; }
+.btn-primary { background: #2563eb; color: #fff; border-color: #2563eb; }
+.btn-primary:hover { background: #1d4ed8; }
+.btn:disabled { opacity: 0.5; cursor: not-allowed; }
+.process-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.process-table th { text-align: left; padding: 8px 12px; background: #f9f9f9; border-bottom: 1px solid #e5e5e5; font-size: 11px; color: #888; font-weight: 500; }
+.process-table td { padding: 10px 12px; border-bottom: 1px solid #f0f0f0; }
+.process-table tr:last-child td { border-bottom: none; }
+.status-dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; margin-right: 6px; }
+.status-dot.GREEN { background: #22c55e; }
+.status-dot.RED { background: #ef4444; }
+.status-dot.YELLOW { background: #f59e0b; }
+.status-dot.GRAY { background: #9ca3af; }
+.last-updated { font-size: 11px; color: #aaa; margin-top: 8px; text-align: right; }
+.runs-header { display: grid; grid-template-columns: 60px 1fr 100px 120px 80px; padding: 10px 16px; background: #f9f9f9; border-bottom: 1px solid #e5e5e5; font-size: 11px; color: #888; font-weight: 500; }
+.run-row { display: grid; grid-template-columns: 60px 1fr 100px 120px 80px; padding: 12px 16px; border-bottom: 1px solid #f0f0f0; font-size: 13px; cursor: pointer; }
+.run-row:hover { background: #f9f9f9; }
+.run-row:last-child { border-bottom: none; }
+.run-id { color: #888; font-family: monospace; }
+.steps-panel { background: #fff; border: 1px solid #e5e5e5; border-radius: 12px; padding: 18px; margin-top: 12px; display: none; }
+.steps-panel.active { display: block; }
+.step-row { display: flex; align-items: flex-start; gap: 10px; padding: 10px 0; border-bottom: 1px solid #f0f0f0; }
+.step-row:last-child { border-bottom: none; }
+.step-icon { width: 20px; height: 20px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 11px; flex-shrink: 0; margin-top: 1px; }
+.step-icon.success { background: #dcfce7; color: #16a34a; }
+.step-icon.error { background: #fee2e2; color: #dc2626; }
+.step-name { font-size: 13px; font-weight: 500; }
+.step-msg { font-size: 12px; color: #888; margin-top: 2px; font-family: monospace; word-break: break-all; }
+.step-time { font-size: 11px; color: #aaa; margin-left: auto; white-space: nowrap; }
+.empty { text-align: center; padding: 32px; color: #aaa; font-size: 13px; }
+.header-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+.toast { position: fixed; bottom: 24px; right: 24px; background: #1a1a1a; color: #fff; padding: 12px 18px; border-radius: 8px; font-size: 13px; display: none; z-index: 999; }
+.toast.show { display: block; }
+</style>
+</head>
+<body>
+
+<div class="nav">
+  <div class="nav-brand">
+    <div class="dot"></div>
+    OrbitSAP
+  </div>
+  <div style="display:flex;align-items:center;gap:10px;">
+    <span style="font-size:12px;color:#888;">DPK / bestehp</span>
+    <button class="btn btn-primary" onclick="startRefresh()">▶ Start refresh</button>
+  </div>
+</div>
+
+<div class="main">
+
+  <div class="metrics">
+    <div class="metric">
+      <div class="metric-label">SAP status</div>
+      <div class="metric-value" id="m-status" style="font-size:16px;">—</div>
+    </div>
+    <div class="metric">
+      <div class="metric-label">Processes</div>
+      <div class="metric-value" id="m-procs" style="color:#2563eb;">—</div>
+    </div>
+    <div class="metric">
+      <div class="metric-label">Total runs</div>
+      <div class="metric-value" id="m-runs" style="color:#2563eb;">—</div>
+    </div>
+    <div class="metric">
+      <div class="metric-label">Completed</div>
+      <div class="metric-value" id="m-completed">—</div>
+    </div>
+  </div>
+
+  <div class="header-row">
+    <div class="section-title">SAP systems</div>
+  </div>
+
+  <div class="agent-card" id="agent-card">
+    <div class="agent-header">
+      <div class="agent-info">
+        <div class="agent-icon">🖥</div>
+        <div>
+          <div class="agent-name">DPK Agent</div>
+          <div class="agent-meta">SID: DPK &nbsp;·&nbsp; Host: bestehp &nbsp;·&nbsp; Instance: 67</div>
+        </div>
+      </div>
+      <div class="btn-group">
+        <button class="btn btn-start" onclick="sapAction('start')" id="btn-start">▶ Start</button>
+        <button class="btn btn-stop" onclick="sapAction('stop')" id="btn-stop">■ Stop</button>
+        <button class="btn btn-restart" onclick="sapAction('restart')" id="btn-restart">↻ Restart</button>
+      </div>
+    </div>
+
+    <table class="process-table">
+      <thead>
+        <tr>
+          <th>Process</th>
+          <th>Description</th>
+          <th>Status</th>
+          <th>Text</th>
+          <th>PID</th>
+        </tr>
+      </thead>
+      <tbody id="process-list">
+        <tr><td colspan="5" class="empty">Loading...</td></tr>
+      </tbody>
+    </table>
+    <div class="last-updated" id="last-updated">—</div>
+  </div>
+
+  <div class="header-row">
+    <div class="section-title">Refresh runs</div>
+    <button class="btn" onclick="loadRuns()">↻ Refresh</button>
+  </div>
+
+  <div class="card">
+    <div class="runs-header">
+      <div>Run</div><div>Started</div><div>Status</div><div>Completed</div><div>Duration</div>
+    </div>
+    <div id="runs-list"><div class="empty">Loading...</div></div>
+  </div>
+
+  <div class="steps-panel" id="steps-panel">
+    <div class="section-title" id="steps-title">Steps</div>
+    <div id="steps-list"></div>
+  </div>
+
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const API = 'http://10.10.2.101:8000';
+const KEY = '79863c05f0ed26ec914d99900912e2dee2b8d3615e0f3fa8f495d3fcd5b3cda7';
+const AGENT_ID = 1;
+const H = {'api-key': KEY};
+let allRuns = [];
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 3000);
+}
+
+async function loadProcesses() {
+  try {
+    const res = await fetch(`${API}/api/agents/${AGENT_ID}/processes`, {headers: H});
+    const data = await res.json();
+    const tbody = document.getElementById('process-list');
+    if (!data.processes || data.processes.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="5" class="empty">No processes found</td></tr>';
+      return;
+    }
+    tbody.innerHTML = data.processes.map(p => `
+      <tr>
+        <td><span class="status-dot ${p.status}"></span>${p.name}</td>
+        <td>${p.description}</td>
+        <td><span class="badge badge-${p.status}">${p.status}</span></td>
+        <td>${p.text}</td>
+        <td style="font-family:monospace;color:#888;">${p.pid}</td>
+      </tr>
+    `).join('');
+    document.getElementById('m-status').innerHTML = `<span class="badge badge-${data.overall}">${data.overall}</span>`;
+    document.getElementById('m-procs').textContent = data.processes.length;
+    document.getElementById('last-updated').textContent = 'Last updated: ' + new Date().toLocaleTimeString();
+  } catch(e) {
+    document.getElementById('process-list').innerHTML = '<tr><td colspan="5" class="empty">Cannot reach SAP</td></tr>';
+  }
+}
+
+async function loadRuns() {
+  try {
+    const res = await fetch(`${API}/api/agents/${AGENT_ID}/runs`, {headers: H});
+    const runs = await res.json();
+    allRuns = runs;
+    document.getElementById('m-runs').textContent = runs.length;
+    document.getElementById('m-completed').textContent = runs.filter(r => r.status === 'completed').length;
+    if (!runs.length) { document.getElementById('runs-list').innerHTML = '<div class="empty">No runs yet</div>'; return; }
+    document.getElementById('runs-list').innerHTML = [...runs].reverse().map(r => {
+      const start = new Date(r.started_at);
+      const end = r.completed_at ? new Date(r.completed_at) : null;
+      const dur = end ? Math.round((end - start)/1000) + 's' : '—';
+      return `<div class="run-row" onclick="showSteps(${r.id})">
+        <div class="run-id">#${r.id}</div>
+        <div>${start.toLocaleTimeString()}</div>
+        <div><span class="badge badge-${r.status}">${r.status}</span></div>
+        <div>${end ? end.toLocaleTimeString() : '—'}</div>
+        <div style="font-family:monospace;font-size:12px;">${dur}</div>
+      </div>`;
+    }).join('');
+  } catch(e) {
+    document.getElementById('runs-list').innerHTML = '<div class="empty">Cannot load runs</div>';
+  }
+}
+
+function showSteps(runId) {
+  const run = allRuns.find(r => r.id === runId);
+  if (!run) return;
+  const panel = document.getElementById('steps-panel');
+  panel.classList.add('active');
+  document.getElementById('steps-title').textContent = `Run #${runId} — ${run.steps.length} steps`;
+  if (!run.steps.length) { document.getElementById('steps-list').innerHTML = '<div class="empty">No steps</div>'; return; }
+  document.getElementById('steps-list').innerHTML = run.steps.map(s => `
+    <div class="step-row">
+      <div class="step-icon ${s.status}">${s.status === 'success' ? '✓' : '✗'}</div>
+      <div style="flex:1;">
+        <div class="step-name">${s.step}</div>
+        <div class="step-msg">${s.message || ''}</div>
+      </div>
+      <div class="step-time">${new Date(s.executed_at).toLocaleTimeString()}</div>
+    </div>
+  `).join('');
+  panel.scrollIntoView({behavior:'smooth', block:'nearest'});
+}
+
+async function sapAction(action) {
+  const labels = {start:'Starting SAP...', stop:'Stopping SAP...', restart:'Restarting SAP...'};
+  showToast(labels[action]);
+  document.getElementById('btn-start').disabled = true;
+  document.getElementById('btn-stop').disabled = true;
+  document.getElementById('btn-restart').disabled = true;
+  try {
+    const res = await fetch(`${API}/api/agents/${AGENT_ID}/${action}`, {method:'POST', headers: H});
+    const data = await res.json();
+    showToast(data.message);
+  } catch(e) {
+    showToast('Action failed');
+  }
+  setTimeout(() => {
+    document.getElementById('btn-start').disabled = false;
+    document.getElementById('btn-stop').disabled = false;
+    document.getElementById('btn-restart').disabled = false;
+  }, 5000);
+}
+
+async function startRefresh() {
+  try {
+    const res = await fetch(`${API}/api/agents/${AGENT_ID}/runs/start`, {method:'POST', headers: H});
+    const run = await res.json();
+    showToast('Run #' + run.id + ' started — run agent_service.py on hanadb');
+    loadRuns();
+  } catch(e) {
+    showToast('Could not start refresh');
+  }
+}
+
+loadProcesses();
+loadRuns();
+setInterval(loadProcesses, 10000);
+setInterval(loadRuns, 30000);
+</script>
+</body>
+</html>
